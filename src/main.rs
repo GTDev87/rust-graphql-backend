@@ -1,3 +1,11 @@
+#[macro_use]
+extern crate diesel;
+
+mod graphql_schema;
+pub mod models;
+pub mod schema;
+
+use crate::graphql_schema::{create_schema, Schema};
 use actix_cors::Cors;
 use actix_web::{
     get, middleware, route,
@@ -7,10 +15,6 @@ use actix_web::{
 use actix_web_lab::respond::Html;
 use juniper::http::{graphiql::graphiql_source, GraphQLRequest};
 use std::{io, sync::Arc};
-
-mod schema;
-
-use crate::schema::{create_schema, Schema};
 
 /// GraphiQL playground UI
 #[get("/graphiql")]
