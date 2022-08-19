@@ -1,10 +1,10 @@
 use crate::schema::todos;
-use diesel::Insertable;
+use diesel::{AsChangeset, Insertable};
 use juniper::{GraphQLInputObject, GraphQLObject};
 
-#[derive(GraphQLInputObject, Insertable)]
+#[derive(GraphQLInputObject, Insertable, AsChangeset)]
 #[table_name = "todos"]
-pub struct NewTodo {
+pub struct TodoInput {
     pub title: String,
     pub description: String,
     pub done: bool,

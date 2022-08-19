@@ -1,11 +1,11 @@
 extern crate dotenv;
 
-use crate::models::{NewTodo, Todo};
+use crate::models::{Todo, TodoInput};
 use diesel::pg::PgConnection;
 use diesel::prelude::*;
 
 use dotenv::dotenv;
-use juniper::{EmptySubscription, RootNode};
+use juniper::{graphql_value, EmptySubscription, FieldError, FieldResult, RootNode};
 use std::env;
 
 fn establish_connection() -> PgConnection {
@@ -19,14 +19,31 @@ pub struct QueryRoot;
 
 #[juniper::graphql_object]
 impl QueryRoot {
-    fn todos() -> Vec<Todo> {
-        use crate::schema::todos::dsl::*;
+    fn todos() -> FieldResult<Vec<Todo>> {
+        use crate::schema::todos::dsl;
 
         let connection = establish_connection();
-        let results = todos
-            .load::<Todo>(&connection)
-            .expect("Error loading todos");
-        results
+        let results = dsl::todos.load::<Todo>(&connection);
+        match results {
+            Ok(todos) => Ok(todos),
+            Err(_) => Err(FieldError::new(
+                "Error loading todos",
+                graphql_value!({ "code": "INTERNAL_SERVER_ERROR" }),
+            )),
+        }
+    }
+    fn todo(id: i32) -> FieldResult<Todo> {
+        use crate::schema::todos::dsl;
+
+        let connection = establish_connection();
+        let results = dsl::todos.filter(dsl::id.eq(id)).first::<Todo>(&connection);
+        match results {
+            Ok(todo) => Ok(todo),
+            Err(_) => Err(FieldError::new(
+                "Todo not found",
+                graphql_value!({ "code": "BAD_USER_INPUT" }),
+            )),
+        }
     }
 }
 
@@ -34,14 +51,48 @@ pub struct MutationRoot;
 
 #[juniper::graphql_object]
 impl MutationRoot {
-    fn create_todo(new_todo: NewTodo) -> Todo {
-        use crate::schema::todos::dsl::*;
+    fn create_todo(data: TodoInput) -> FieldResult<Todo> {
+        use crate::schema::todos::dsl;
+
         let connection = establish_connection();
-        let todo = diesel::insert_into(todos)
-            .values(&new_todo)
-            .get_result::<Todo>(&connection)
-            .expect("Error saving new todo");
-        todo
+        let results = diesel::insert_into(dsl::todos)
+            .values(&data)
+            .get_result::<Todo>(&connection);
+        match results {
+            Ok(todo) => Ok(todo),
+            Err(_) => Err(FieldError::new(
+                "Error creating todo",
+                graphql_value!({ "code": "BAD_USER_INPUT" }),
+            )),
+        }
+    }
+    fn update_todo(id: i32, data: TodoInput) -> FieldResult<Todo> {
+        use crate::schema::todos::dsl;
+
+        let connection = establish_connection();
+        let results = diesel::update(dsl::todos.find(id))
+            .set(&data)
+            .get_result::<Todo>(&connection);
+        match results {
+            Ok(todo) => Ok(todo),
+            Err(_) => Err(FieldError::new(
+                "Error updating todo",
+                graphql_value!({ "code": "BAD_USER_INPUT" }),
+            )),
+        }
+    }
+    fn delete_todo(id: i32) -> FieldResult<Todo> {
+        use crate::schema::todos::dsl;
+
+        let connection = establish_connection();
+        let results = diesel::delete(dsl::todos.find(id)).get_result::<Todo>(&connection);
+        match results {
+            Ok(todo) => Ok(todo),
+            Err(_) => Err(FieldError::new(
+                "Error deleting todo",
+                graphql_value!({ "code": "BAD_USER_INPUT" }),
+            )),
+        }
     }
 }
 
