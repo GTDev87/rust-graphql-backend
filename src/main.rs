@@ -6,50 +6,46 @@ pub mod models;
 pub mod schema;
 
 use crate::graphql_schema::{create_schema, Schema};
-use actix_cors::Cors;
-use actix_web::{
-    get, middleware, route,
-    web::{self, Data},
-    App, HttpResponse, HttpServer, Responder,
-};
-use actix_web_lab::respond::Html;
 use juniper::http::{graphiql::graphiql_source, GraphQLRequest};
-use std::{io, sync::Arc};
+use rocket::{get, post, routes, State};
+use rocket::fairing::AdHoc;
+use rocket::response::content::RawHtml;
+use rocket::serde::json::Json;
+use rocket_cors::{AllowedOrigins, CorsOptions};
+use std::sync::Arc;
+use serde_json;
 
 /// GraphiQL playground UI
 #[get("/graphiql")]
-async fn graphql_playground() -> impl Responder {
-    Html(graphiql_source("/graphql", None))
+fn graphql_playground() -> RawHtml<String> {
+    RawHtml(graphiql_source("/graphql", None))
 }
 
 /// GraphQL endpoint
-#[route("/graphql", method = "GET", method = "POST")]
-async fn graphql(st: web::Data<Schema>, data: web::Json<GraphQLRequest>) -> impl Responder {
-    let user = data.execute(&st, &()).await;
-    HttpResponse::Ok().json(user)
+#[post("/graphql", data = "<request>")]
+async fn graphql(schema: &State<Arc<Schema>>, request: Json<GraphQLRequest>) -> Json<juniper::http::GraphQLResponse> {
+    // Convert the incoming GraphQLRequest to an owned type
+    let request = request.into_inner();
+    // Execute the request
+    let response = request.execute(&schema, &()).await;
+    // Return the response as JSON
+    Json(response)
 }
 
-#[actix_web::main]
-async fn main() -> io::Result<()> {
-    env_logger::init_from_env(env_logger::Env::new().default_filter_or("info"));
 
-    // Create Juniper schema
+#[rocket::launch]
+fn rocket() -> _ {
     let schema = Arc::new(create_schema());
 
-    log::info!("Starting HTTP server on port 4000");
-    log::info!("GraphiQL playground: http://localhost:4000/graphiql");
+    let cors = CorsOptions::default()
+        .allowed_origins(AllowedOrigins::all())
+        .allowed_methods(vec![rocket::http::Method::Get, rocket::http::Method::Post].into_iter().map(From::from).collect())
+        .to_cors()
+        .expect("Cors setup failed");
 
-    // Start HTTP server
-    HttpServer::new(move || {
-        App::new()
-            .app_data(Data::from(schema.clone()))
-            .service(graphql)
-            .service(graphql_playground)
-            .wrap(Cors::permissive())
-            .wrap(middleware::Logger::default())
-    })
-    .workers(2)
-    .bind(("127.0.0.1", 4000))?
-    .run()
-    .await
+    rocket::build()
+        .mount("/", routes![graphql_playground, graphql])
+        .manage(schema)
+        .attach(cors)
+        .attach(AdHoc::on_ignite("Cors", |rocket| async { rocket }))
 }
