@@ -6,14 +6,14 @@ pub mod models;
 pub mod schema;
 
 use crate::graphql_schema::{create_schema, Schema};
-use juniper::http::{graphiql::graphiql_source, GraphQLRequest};
+use juniper::http::{graphiql::graphiql_source, GraphQLRequest, GraphQLResponse};
 use rocket::{get, post, routes, State};
+use rocket::serde::json::Json;
+
 use rocket::fairing::AdHoc;
 use rocket::response::content::RawHtml;
-use rocket::serde::json::Json;
 use rocket_cors::{AllowedOrigins, CorsOptions};
 use std::sync::Arc;
-use serde_json;
 
 /// GraphiQL playground UI
 #[get("/graphiql")]
@@ -23,7 +23,7 @@ fn graphql_playground() -> RawHtml<String> {
 
 /// GraphQL endpoint
 #[post("/graphql", data = "<request>")]
-async fn graphql(schema: &State<Arc<Schema>>, request: Json<GraphQLRequest>) -> Json<juniper::http::GraphQLResponse> {
+async fn graphql(schema: &State<Arc<Schema>>, request: Json<GraphQLRequest>) -> Json<GraphQLResponse> {
     // Convert the incoming GraphQLRequest to an owned type
     let request = request.into_inner();
     // Execute the request
@@ -39,7 +39,14 @@ fn rocket() -> _ {
 
     let cors = CorsOptions::default()
         .allowed_origins(AllowedOrigins::all())
-        .allowed_methods(vec![rocket::http::Method::Get, rocket::http::Method::Post].into_iter().map(From::from).collect())
+        .allowed_methods(
+            vec![
+                rocket::http::Method::Get,
+                rocket::http::Method::Post
+            ]
+            .into_iter()
+            .map(From::from)
+            .collect())
         .to_cors()
         .expect("Cors setup failed");
 
