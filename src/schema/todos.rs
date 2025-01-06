@@ -1,4 +1,4 @@
-use crate::schema::todos;
+use crate::models::todos::todos;
 use diesel::{AsChangeset, Insertable};
 use juniper::{GraphQLInputObject, GraphQLObject};
 
