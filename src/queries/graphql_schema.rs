@@ -1,6 +1,6 @@
 extern crate dotenv;
 
-use crate::models::{Todo, TodoInput};
+use crate::schema::todos::{Todo, TodoInput};
 use diesel::pg::PgConnection;
 use diesel::prelude::*;
 
@@ -20,7 +20,7 @@ pub struct QueryRoot;
 #[juniper::graphql_object]
 impl QueryRoot {
     fn todos() -> FieldResult<Vec<Todo>> {
-        use crate::schema::todos::dsl;
+        use crate::models::todos::todos::dsl;
 
         let mut connection = establish_connection();
         let results = dsl::todos.load::<Todo>(&mut connection);
@@ -33,7 +33,7 @@ impl QueryRoot {
         }
     }
     fn todo(id: i32) -> FieldResult<Todo> {
-        use crate::schema::todos::dsl;
+        use crate::models::todos::todos::dsl;
 
         let mut connection = establish_connection();
         let results = dsl::todos.filter(dsl::id.eq(id)).first::<Todo>(&mut connection);
@@ -52,7 +52,7 @@ pub struct MutationRoot;
 #[juniper::graphql_object]
 impl MutationRoot {
     fn create_todo(data: TodoInput) -> FieldResult<Todo> {
-        use crate::schema::todos::dsl;
+        use crate::models::todos::todos::dsl;
 
         let mut connection = establish_connection();
         let results = diesel::insert_into(dsl::todos)
@@ -67,7 +67,7 @@ impl MutationRoot {
         }
     }
     fn update_todo(id: i32, data: TodoInput) -> FieldResult<Todo> {
-        use crate::schema::todos::dsl;
+        use crate::models::todos::todos::dsl;
 
         let mut connection = establish_connection();
         let results = diesel::update(dsl::todos.find(id))
@@ -82,7 +82,7 @@ impl MutationRoot {
         }
     }
     fn delete_todo(id: i32) -> FieldResult<Todo> {
-        use crate::schema::todos::dsl;
+        use crate::models::todos::todos::dsl;
 
         let mut connection = establish_connection();
         let results = diesel::delete(dsl::todos.find(id)).get_result::<Todo>(&mut connection);

@@ -1,11 +1,11 @@
 #[macro_use]
 extern crate diesel;
 
-mod graphql_schema;
+mod queries;
 pub mod models;
 pub mod schema;
 
-use crate::graphql_schema::{create_schema, Schema};
+use crate::queries::graphql_schema::{create_schema, Schema};
 use juniper::http::{graphiql::graphiql_source, GraphQLRequest, GraphQLResponse};
 use rocket::{get, post, routes, State};
 use rocket::serde::json::Json;
