@@ -22,8 +22,8 @@ impl QueryRoot {
     fn todos() -> FieldResult<Vec<Todo>> {
         use crate::schema::todos::dsl;
 
-        let connection = establish_connection();
-        let results = dsl::todos.load::<Todo>(&connection);
+        let mut connection = establish_connection();
+        let results = dsl::todos.load::<Todo>(&mut connection);
         match results {
             Ok(todos) => Ok(todos),
             Err(_) => Err(FieldError::new(
@@ -35,8 +35,8 @@ impl QueryRoot {
     fn todo(id: i32) -> FieldResult<Todo> {
         use crate::schema::todos::dsl;
 
-        let connection = establish_connection();
-        let results = dsl::todos.filter(dsl::id.eq(id)).first::<Todo>(&connection);
+        let mut connection = establish_connection();
+        let results = dsl::todos.filter(dsl::id.eq(id)).first::<Todo>(&mut connection);
         match results {
             Ok(todo) => Ok(todo),
             Err(_) => Err(FieldError::new(
@@ -54,10 +54,10 @@ impl MutationRoot {
     fn create_todo(data: TodoInput) -> FieldResult<Todo> {
         use crate::schema::todos::dsl;
 
-        let connection = establish_connection();
+        let mut connection = establish_connection();
         let results = diesel::insert_into(dsl::todos)
             .values(&data)
-            .get_result::<Todo>(&connection);
+            .get_result::<Todo>(&mut connection);
         match results {
             Ok(todo) => Ok(todo),
             Err(_) => Err(FieldError::new(
@@ -69,10 +69,10 @@ impl MutationRoot {
     fn update_todo(id: i32, data: TodoInput) -> FieldResult<Todo> {
         use crate::schema::todos::dsl;
 
-        let connection = establish_connection();
+        let mut connection = establish_connection();
         let results = diesel::update(dsl::todos.find(id))
             .set(&data)
-            .get_result::<Todo>(&connection);
+            .get_result::<Todo>(&mut connection);
         match results {
             Ok(todo) => Ok(todo),
             Err(_) => Err(FieldError::new(
@@ -84,8 +84,8 @@ impl MutationRoot {
     fn delete_todo(id: i32) -> FieldResult<Todo> {
         use crate::schema::todos::dsl;
 
-        let connection = establish_connection();
-        let results = diesel::delete(dsl::todos.find(id)).get_result::<Todo>(&connection);
+        let mut connection = establish_connection();
+        let results = diesel::delete(dsl::todos.find(id)).get_result::<Todo>(&mut connection);
         match results {
             Ok(todo) => Ok(todo),
             Err(_) => Err(FieldError::new(

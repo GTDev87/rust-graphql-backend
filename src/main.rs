@@ -24,12 +24,12 @@ fn graphql_playground() -> RawHtml<String> {
 /// GraphQL endpoint
 #[post("/graphql", data = "<request>")]
 async fn graphql(schema: &State<Arc<Schema>>, request: Json<GraphQLRequest>) -> Json<GraphQLResponse> {
-    // Convert the incoming GraphQLRequest to an owned type
-    let request = request.into_inner();
-    // Execute the request
-    let response = request.execute(&schema, &()).await;
-    // Return the response as JSON
-    Json(response)
+    Json(
+        request
+            .into_inner()
+            .execute(&schema, &())
+            .await
+    )
 }
 
 
