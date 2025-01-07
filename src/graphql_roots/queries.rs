@@ -1,8 +1,8 @@
 use crate::db;
 
-use crate::schema::todos::{Todo, TodoInput};
+use crate::schema::todos::{Todo};
 use diesel::prelude::*;
-use juniper::{graphql_value, EmptySubscription, FieldError, FieldResult, RootNode};
+use juniper::{graphql_value, FieldError, FieldResult};
 
 pub struct QueryRoot;
 

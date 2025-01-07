@@ -1,7 +1,7 @@
-use juniper::{graphql_value, EmptySubscription, FieldError, FieldResult, RootNode};
+use juniper::{EmptySubscription, RootNode};
 
-pub mod queries;
-pub mod mutations;
+mod queries;
+mod mutations;
 
 pub type Schema = RootNode<'static, queries::QueryRoot, mutations::MutationRoot, EmptySubscription>;
 

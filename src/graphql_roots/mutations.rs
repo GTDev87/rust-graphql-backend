@@ -1,7 +1,7 @@
 use crate::db::{establish_connection};
 use crate::schema::todos::{Todo, TodoInput};
 use diesel::prelude::*;
-use juniper::{graphql_value, EmptySubscription, FieldError, FieldResult, RootNode};
+use juniper::{graphql_value, FieldError, FieldResult};
 
 pub struct MutationRoot;
 
