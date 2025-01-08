@@ -1,6 +1,4 @@
-use crate::schema::todos::{Todo};
-use diesel::prelude::*;
-use juniper::{graphql_value, FieldError, FieldResult};
+use juniper::{FieldResult};
 
 use crate::graphql_roots::Context;
 

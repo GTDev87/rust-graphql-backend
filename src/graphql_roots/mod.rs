@@ -1,4 +1,4 @@
-use juniper::{EmptySubscription, RootNode};
+use juniper::{RootNode};
 
 mod queries;
 mod mutations;

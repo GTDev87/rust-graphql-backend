@@ -17,7 +17,6 @@ impl QueryRoot {
         let results = dsl::todos.load::<Todo>(&mut connection);
         match results {
             Ok(todos) => Ok(todos),
-            // Err(e) => Err(anyhow!("{e}")),
             Err(_) => Err(FieldError::new(
                 "Error loading todos",
                 graphql_value!({ "code": "INTERNAL_SERVER_ERROR" }),
@@ -31,7 +30,6 @@ impl QueryRoot {
         let results = dsl::todos.filter(dsl::id.eq(id)).first::<Todo>(&mut connection);
         match results {
             Ok(todo) => Ok(todo),
-            // Err(e) => Err(anyhow!("{e}")),
             Err(_) => Err(FieldError::new(
                 "Todo not found",
                 graphql_value!({ "code": "BAD_USER_INPUT" }),

@@ -18,7 +18,6 @@ impl MutationRoot {
             .get_result::<Todo>(&mut connection);
         match results {
             Ok(todo) => Ok(todo),
-            // Err(e) => Err(Arc::new(anyhow!("{e}"))),
             Err(_) => Err(FieldError::new(
                 "Error creating todo",
                 graphql_value!({ "code": "BAD_USER_INPUT" }),
@@ -34,7 +33,6 @@ impl MutationRoot {
             .get_result::<Todo>(&mut connection);
         match results {
             Ok(todo) => Ok(todo),
-            // Err(e) => Err(Arc::new(anyhow!("{e}"))),
             Err(_) => Err(FieldError::new(
                 "Error updating todo",
                 graphql_value!({ "code": "BAD_USER_INPUT" }),
@@ -48,7 +46,6 @@ impl MutationRoot {
         let results = diesel::delete(dsl::todos.find(id)).get_result::<Todo>(&mut connection);
         match results {
             Ok(todo) => Ok(todo),
-            // Err(e) => Err(Arc::new(anyhow!("{e}"))),
             Err(_) => Err(FieldError::new(
                 "Error deleting todo",
                 graphql_value!({ "code": "BAD_USER_INPUT" }),
