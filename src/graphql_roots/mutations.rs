@@ -2,12 +2,14 @@ use crate::db::{establish_connection};
 use crate::schema::todos::{Todo, TodoInput};
 use diesel::prelude::*;
 use juniper::{graphql_value, FieldError, FieldResult};
+use crate::graphql_roots::Context;
 
 pub struct MutationRoot;
 
 #[juniper::graphql_object]
+#[graphql(context = Context)]
 impl MutationRoot {
-    fn create_todo(data: TodoInput) -> FieldResult<Todo> {
+    fn create_todo(_ctx: &Context, data: TodoInput) -> FieldResult<Todo> {
         use crate::models::todos::todos::dsl;
 
         let mut connection = establish_connection();
@@ -16,13 +18,14 @@ impl MutationRoot {
             .get_result::<Todo>(&mut connection);
         match results {
             Ok(todo) => Ok(todo),
+            // Err(e) => Err(Arc::new(anyhow!("{e}"))),
             Err(_) => Err(FieldError::new(
                 "Error creating todo",
                 graphql_value!({ "code": "BAD_USER_INPUT" }),
             )),
         }
     }
-    fn update_todo(id: i32, data: TodoInput) -> FieldResult<Todo> {
+    fn update_todo(_ctx: &Context, id: i32, data: TodoInput) -> FieldResult<Todo> {
         use crate::models::todos::todos::dsl;
 
         let mut connection = establish_connection();
@@ -31,19 +34,21 @@ impl MutationRoot {
             .get_result::<Todo>(&mut connection);
         match results {
             Ok(todo) => Ok(todo),
+            // Err(e) => Err(Arc::new(anyhow!("{e}"))),
             Err(_) => Err(FieldError::new(
                 "Error updating todo",
                 graphql_value!({ "code": "BAD_USER_INPUT" }),
             )),
         }
     }
-    fn delete_todo(id: i32) -> FieldResult<Todo> {
+    fn delete_todo(_ctx: &Context, id: i32) -> FieldResult<Todo> {
         use crate::models::todos::todos::dsl;
 
         let mut connection = establish_connection();
         let results = diesel::delete(dsl::todos.find(id)).get_result::<Todo>(&mut connection);
         match results {
             Ok(todo) => Ok(todo),
+            // Err(e) => Err(Arc::new(anyhow!("{e}"))),
             Err(_) => Err(FieldError::new(
                 "Error deleting todo",
                 graphql_value!({ "code": "BAD_USER_INPUT" }),
