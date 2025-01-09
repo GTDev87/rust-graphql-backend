@@ -15,9 +15,9 @@ impl MutationRoot {
         let mut connection = establish_connection();
         let results = diesel::insert_into(dsl::todos)
             .values(&data)
-            .get_result::<Todo>(&mut connection);
+            .get_result::<crate::models::todos::Todo>(&mut connection);
         match results {
-            Ok(todo) => Ok(todo),
+            Ok(todo) => Ok(Todo { id: todo.id}),
             Err(_) => Err(FieldError::new(
                 "Error creating todo",
                 graphql_value!({ "code": "BAD_USER_INPUT" }),
@@ -30,9 +30,9 @@ impl MutationRoot {
         let mut connection = establish_connection();
         let results = diesel::update(dsl::todos.find(id))
             .set(&data)
-            .get_result::<Todo>(&mut connection);
+            .get_result::<crate::models::todos::Todo>(&mut connection);
         match results {
-            Ok(todo) => Ok(todo),
+            Ok(todo) => Ok(Todo { id: todo.id}),
             Err(_) => Err(FieldError::new(
                 "Error updating todo",
                 graphql_value!({ "code": "BAD_USER_INPUT" }),
@@ -43,9 +43,9 @@ impl MutationRoot {
         use crate::models::todos::todos::dsl;
 
         let mut connection = establish_connection();
-        let results = diesel::delete(dsl::todos.find(id)).get_result::<Todo>(&mut connection);
+        let results = diesel::delete(dsl::todos.find(id)).get_result::<crate::models::todos::Todo>(&mut connection);
         match results {
-            Ok(todo) => Ok(todo),
+            Ok(todo) => Ok(Todo { id: todo.id}),
             Err(_) => Err(FieldError::new(
                 "Error deleting todo",
                 graphql_value!({ "code": "BAD_USER_INPUT" }),

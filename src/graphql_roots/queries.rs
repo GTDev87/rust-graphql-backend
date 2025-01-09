@@ -14,9 +14,12 @@ impl QueryRoot {
         use crate::models::todos::todos::dsl;
 
         let mut connection = db::establish_connection();
-        let results = dsl::todos.load::<Todo>(&mut connection);
+        let results = dsl::todos.load::<crate::models::todos::Todo>(&mut connection);
         match results {
-            Ok(todos) => Ok(todos),
+            Ok(todos) =>{
+                let todos = todos.into_iter().map(|todo| {Todo {id: todo.id}}).collect(); // Collect back into a Vec<Todo>
+                Ok(todos)
+            }
             Err(_) => Err(FieldError::new(
                 "Error loading todos",
                 graphql_value!({ "code": "INTERNAL_SERVER_ERROR" }),
@@ -27,9 +30,9 @@ impl QueryRoot {
         use crate::models::todos::todos::dsl;
 
         let mut connection = db::establish_connection();
-        let results = dsl::todos.filter(dsl::id.eq(id)).first::<Todo>(&mut connection);
+        let results = dsl::todos.filter(dsl::id.eq(id)).first::<crate::models::todos::Todo>(&mut connection);
         match results {
-            Ok(todo) => Ok(todo),
+            Ok(todo) => Ok(Todo { id: todo.id}),
             Err(_) => Err(FieldError::new(
                 "Todo not found",
                 graphql_value!({ "code": "BAD_USER_INPUT" }),
