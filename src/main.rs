@@ -6,6 +6,9 @@ mod graphql_roots;
 pub mod models;
 pub mod schema;
 
+use env_logger;
+use log::{info, warn, error};
+
 use crate::graphql_roots::{create_schema, create_context, Schema, Context};
 use axum::{
     extract::Extension,
@@ -28,6 +31,8 @@ async fn graphql(
     Extension(context): Extension<Context>,
     Json(request): Json<GraphQLRequest>,
 ) -> Json<juniper::http::GraphQLResponse> {
+    info!("Serving GraphiQL playground");
+
     let response = request.execute(&schema, &context).await;
     Json(response)
 }
@@ -35,6 +40,7 @@ async fn graphql(
 #[tokio::main]
 async fn main() {
     env_logger::init();
+    info!("Starting the server...");
 
     let schema = Arc::new(create_schema());
     let context = create_context();
