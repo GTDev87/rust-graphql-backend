@@ -31,12 +31,15 @@ impl Todo {
         self.id
     }
     // fn title(&self) -> String {
-    //     self.title.to_string()
+    //     // self.title.to_string()
+    //     String::from("hello title")
     // }
     // fn description(&self) -> String {
-    //     self.description.to_string()
+    //     // self.description.to_string()
+    //     String::from("hello description")
     // }
     // fn done(&self) -> bool {
-    //     self.done
+    //     // self.done
+    //     false
     // }
 }

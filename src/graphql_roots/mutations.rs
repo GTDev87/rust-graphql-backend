@@ -9,7 +9,7 @@ pub struct MutationRoot;
 #[juniper::graphql_object]
 #[graphql(context = Context)]
 impl MutationRoot {
-    fn create_todo(_ctx: &Context, data: TodoInput) -> FieldResult<Todo> {
+    fn create_todo(data: TodoInput) -> FieldResult<Todo> {
         use crate::models::todos::todos::dsl;
 
         let mut connection = establish_connection();
@@ -24,7 +24,7 @@ impl MutationRoot {
             )),
         }
     }
-    fn update_todo(_ctx: &Context, id: i32, data: TodoInput) -> FieldResult<Todo> {
+    fn update_todo(id: i32, data: TodoInput) -> FieldResult<Todo> {
         use crate::models::todos::todos::dsl;
 
         let mut connection = establish_connection();
@@ -39,7 +39,7 @@ impl MutationRoot {
             )),
         }
     }
-    fn delete_todo(_ctx: &Context, id: i32) -> FieldResult<Todo> {
+    fn delete_todo(id: i32) -> FieldResult<Todo> {
         use crate::models::todos::todos::dsl;
 
         let mut connection = establish_connection();

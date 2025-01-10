@@ -10,7 +10,7 @@ pub struct QueryRoot;
 #[juniper::graphql_object]
 #[graphql(context = Context)]
 impl QueryRoot {
-    fn todos(_ctx: &Context) -> FieldResult<Vec<Todo>> {
+    fn todos() -> FieldResult<Vec<Todo>> {
         use crate::models::todos::todos::dsl;
 
         let mut connection = db::establish_connection();
@@ -26,7 +26,7 @@ impl QueryRoot {
             )),
         }
     }
-    fn todo(id: i32, _ctx: &Context) -> FieldResult<Todo> {
+    fn todo(id: i32) -> FieldResult<Todo> {
         use crate::models::todos::todos::dsl;
 
         let mut connection = db::establish_connection();

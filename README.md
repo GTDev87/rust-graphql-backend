@@ -1,2 +1,2 @@
 # rust-graphql-backend
-Todo App made with Rust, Rocket, Juniper, Diesel and Dataloader pattern
+Todo App made with Rust, Axum, Juniper, Diesel and Dataloader pattern

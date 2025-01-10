@@ -7,61 +7,53 @@ pub mod models;
 pub mod schema;
 
 use crate::graphql_roots::{create_schema, create_context, Schema, Context};
-use juniper::http::{graphiql::graphiql_source, GraphQLRequest, GraphQLResponse};
-use rocket::{get, post, routes, State};
-use rocket::serde::json::Json;
-
-use rocket::fairing::AdHoc;
-use rocket::response::content::RawHtml;
-use rocket_cors::{AllowedOrigins, CorsOptions};
+use axum::{
+    extract::Extension,
+    response::Html,
+    routing::{get, post},
+    Json, Router,
+};
+use juniper::http::{graphiql::graphiql_source, GraphQLRequest};
 use std::sync::Arc;
+use tower_http::cors::{Any, CorsLayer};
 
 /// GraphiQL playground UI
-#[get("/graphiql")]
-fn graphql_playground() -> RawHtml<String> {
-    RawHtml(graphiql_source("/graphql", None))
+async fn graphql_playground() -> Html<String> {
+    Html(graphiql_source("/graphql", None))
 }
 
 /// GraphQL endpoint
-#[post("/graphql", data = "<request>")]
 async fn graphql(
-    context: &State<Context>,
-    schema: &State<Arc<Schema>>,
-    request: Json<GraphQLRequest>,
-) -> Json<GraphQLResponse> {
-    // Clone the context to pass it to the execute method
-    let ctx = context.inner().clone();
-    Json(
-        request
-            .execute(schema.inner().as_ref(), &ctx)
-            .await,
-    )
-
+    Extension(schema): Extension<Arc<Schema>>,
+    Extension(context): Extension<Context>,
+    Json(request): Json<GraphQLRequest>,
+) -> Json<juniper::http::GraphQLResponse> {
+    let response = request.execute(&schema, &context).await;
+    Json(response)
 }
 
-#[rocket::launch]
-fn rocket() -> _ {
-    let schema = Arc::new(create_schema());
+#[tokio::main]
+async fn main() {
+    env_logger::init();
 
+    let schema = Arc::new(create_schema());
     let context = create_context();
 
-    let cors = CorsOptions::default()
-        .allowed_origins(AllowedOrigins::all())
-        .allowed_methods(
-            vec![
-                rocket::http::Method::Get,
-                rocket::http::Method::Post
-            ]
-            .into_iter()
-            .map(From::from)
-            .collect())
-        .to_cors()
-        .expect("Cors setup failed");
+    let cors = CorsLayer::new()
+        .allow_origin(Any)
+        .allow_methods(Any);
 
-    rocket::build()
-        .mount("/", routes![graphql_playground, graphql])
-        .manage(context)
-        .manage(schema)
-        .attach(cors)
-        .attach(AdHoc::on_ignite("Cors", |rocket| async { rocket }))
+    let app = Router::new()
+        .route("/graphiql", get(graphql_playground))
+        .route("/graphql", post(graphql))
+        .layer(cors)
+        .layer(Extension(schema))
+        .layer(Extension(context));
+
+    let addr = "0.0.0.0:8080".parse::<std::net::SocketAddr>().unwrap();
+    let listener = tokio::net::TcpListener::bind(&addr).await.unwrap();
+
+    axum::serve(listener, app.into_make_service())
+        .await
+        .unwrap();
 }
