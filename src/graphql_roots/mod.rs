@@ -30,10 +30,8 @@ pub struct Context {
 impl juniper::Context for Context {}
 
 pub fn create_context() -> Context {
-    let repo = Repository;
-    let todo_loader = crate::models::todos::new_todo_loader(repo.clone());
     Context {
-        repo,
-        todo_loader,
+        repo: Repository,
+        todo_loader: crate::models::todos::new_todo_loader(Repository.clone()),
     }
 }

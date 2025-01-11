@@ -6,7 +6,7 @@ use crate::graphql_roots::Context;
 pub type TodoId = i32;
 
 #[derive(GraphQLInputObject, Insertable, AsChangeset)]
-#[table_name = "todos"]
+#[diesel(table_name = todos)]
 pub struct TodoInput {
     pub title: String,
     pub description: String,
