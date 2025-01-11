@@ -6,7 +6,10 @@ mod graphql_roots;
 pub mod models;
 pub mod schema;
 
+use env_logger::Env;
+
 use env_logger;
+
 use log::{info, warn, error};
 
 use crate::graphql_roots::{create_schema, create_context, Schema, Context};
@@ -39,7 +42,8 @@ async fn graphql(
 
 #[tokio::main]
 async fn main() {
-    env_logger::init();
+    env_logger::Builder::from_env(Env::default().default_filter_or("info,diesel=debug")).init();
+    // env_logger::init();
     info!("Starting the server...");
 
     let schema = Arc::new(create_schema());
