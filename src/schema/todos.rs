@@ -1,6 +1,6 @@
 use crate::models::todos::todos;
 use diesel::{AsChangeset, Insertable};
-use juniper::{GraphQLInputObject};
+use juniper::{GraphQLInputObject, FieldResult};
 use crate::graphql_roots::Context;
 use std::sync::Arc;
 use crate::graphql_roots::{Repository};
@@ -33,11 +33,11 @@ pub struct TodoBatcher {
 // Since `BatchFn` doesn't provide any notion of fallible loading, like 
 // `try_load()` returning `Result<HashMap<K, V>, E>`, we handle possible
 // errors as loaded values and unpack them later in the resolver.
-impl dataloader::BatchFn<TodoId, Result<Todo, Arc<anyhow::Error>>> for TodoBatcher {
+impl dataloader::BatchFn<TodoId, Result<crate::models::todos::Todo, Arc<anyhow::Error>>> for TodoBatcher {
     async fn load(
         &mut self, 
         ids: &[TodoId],
-    ) -> HashMap<TodoId, Result<Todo, Arc<anyhow::Error>>> {
+    ) -> HashMap<TodoId, Result<crate::models::todos::Todo, Arc<anyhow::Error>>> {
         // Effectively performs the following SQL query:
         // SELECT id, name FROM cults WHERE id IN (${cult_id1}, ${cult_id2}, ...)
         match self.repo.load_todos_by_ids(ids).await {
@@ -58,7 +58,7 @@ impl dataloader::BatchFn<TodoId, Result<Todo, Arc<anyhow::Error>>> for TodoBatch
     }
 }
 
-pub type TodoLoader = Loader<TodoId, Result<Todo, Arc<anyhow::Error>>, TodoBatcher>;
+pub type TodoLoader = Loader<TodoId, Result<crate::models::todos::Todo, Arc<anyhow::Error>>, TodoBatcher>;
 
 pub fn new_todo_loader(repo: Repository) -> TodoLoader {
     TodoLoader::new(TodoBatcher { repo })
@@ -80,16 +80,16 @@ impl Todo {
     fn id(&self) -> i32 {
         self.id
     }
-    // fn title(&self) -> String {
-    //     // self.title.to_string()
-    //     String::from("hello title")
-    // }
-    // fn description(&self) -> String {
-    //     // self.description.to_string()
-    //     String::from("hello description")
-    // }
-    // fn done(&self) -> bool {
-    //     // self.done
-    //     false
-    // }
+    async fn title(&self, ctx: &Context) -> FieldResult<String> {
+        let todo = ctx.todo_loader.try_load(self.id).await??; // Unwrap the Result
+        Ok(todo.title)
+    }
+    async fn description(&self, ctx: &Context) -> FieldResult<String> {
+        let todo = ctx.todo_loader.try_load(self.id).await??; // Unwrap the Result
+        Ok(todo.description)
+    }
+    async fn done(&self, ctx: &Context) -> FieldResult<bool> {
+        let todo = ctx.todo_loader.try_load(self.id).await??; // Unwrap the Result
+        Ok(todo.done)
+    }
 }

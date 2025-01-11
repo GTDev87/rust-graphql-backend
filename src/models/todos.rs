@@ -10,7 +10,7 @@ table! {
 #[derive(Queryable, Debug, Clone)]
 pub struct Todo {
     pub id: i32,
-    title: String,
-    description: String,
-    done: bool,
+    pub title: String,
+    pub description: String,
+    pub done: bool,
 }

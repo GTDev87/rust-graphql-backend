@@ -2,6 +2,8 @@ use juniper::{RootNode};
 use std::collections::HashMap;
 use std::sync::Arc;
 use dataloader::non_cached::Loader;
+use crate::db;
+use diesel::prelude::*;
 
 mod queries;
 mod mutations;
@@ -17,15 +19,27 @@ pub fn create_schema() -> Schema {
 pub struct Repository;
 
 impl Repository {
-    pub async fn load_todos_by_ids(&self, ids: &[crate::schema::todos::TodoId]) -> anyhow::Result<HashMap<crate::schema::todos::TodoId, crate::schema::todos::Todo>> { 
-        unimplemented!() 
+    pub async fn load_todos_by_ids(&self, ids: &[crate::schema::todos::TodoId]) -> anyhow::Result<HashMap<crate::schema::todos::TodoId, crate::models::todos::Todo>> { 
+        use crate::models::todos::todos::dsl::{todos, id};
+        
+        let mut conn = db::establish_connection();
+
+        // Query the database for todos with the given IDs
+        let results = todos
+            .filter(id.eq_any(ids))
+            .load::<crate::models::todos::Todo>(&mut conn)?;
+
+        // Convert the results into a HashMap
+        let todo_map = results.into_iter().map(|todo| (todo.id, todo)).collect();
+
+        Ok(todo_map)
     }
 }
 
 #[derive(Clone)]
 pub struct Context {
     repo: Repository,
-    todo_loader: crate::schema::todos::TodoLoader,
+    pub todo_loader: crate::schema::todos::TodoLoader,
 }
 
 
