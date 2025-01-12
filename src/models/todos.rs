@@ -1,14 +1,12 @@
 use diesel::prelude::*;
-use anyhow::Result;
 use std::collections::HashMap;
 use std::sync::Arc;
 use dataloader::non_cached::Loader;
 use dataloader::BatchFn;
+use anyhow::{Result, Error};
 
-
-
-use crate::db;
 use crate::graphql_roots::{Repository};
+
 
 table! {
     todos (id) {
@@ -28,24 +26,18 @@ pub struct Todo {
 }
 
 
-
 impl Todo {
     pub fn load_todos_by_ids(ids: &[i32]) -> Result<HashMap<i32, Todo>> {
-        let mut conn = db::establish_connection();
         use crate::models::todos::todos::dsl::{todos, id};
 
-        // Query the database for todos with the given IDs
-        let results = todos
-            .filter(id.eq_any(ids))
-            .load::<Todo>(&mut conn)?;
+        let load_todos = crate::dataloader::load_by_ids(
+            |conn, ids| {todos.filter(id.eq_any(ids)).load::<Todo>(conn).map_err(Error::from)},
+            |todo: &Todo| todo.id,
+        );
 
-        // Convert the results into a HashMap
-        let todo_map = results.into_iter().map(|todo| (todo.id, todo)).collect();
-
-        Ok(todo_map)
+        load_todos(ids)
     }
 }
-
 
 pub struct TodoBatcher {
     pub repo: Repository,
@@ -53,15 +45,8 @@ pub struct TodoBatcher {
 
 impl BatchFn<i32, Result<Todo, Arc<anyhow::Error>>> for TodoBatcher {
     async fn load(&mut self, keys: &[i32]) -> HashMap<i32, Result<Todo, Arc<anyhow::Error>>> {
-        match self.repo.load_todos_by_ids(keys).await {
-            Ok(found_todos) => found_todos.into_iter().map(|(id, todo)| (id, Ok(todo))).collect(),
-            Err(e) => {
-                // Since `anyhow::Error` doesn't implement `Clone`, we have to
-                // work around here.
-                let e = Arc::new(e);
-                keys.iter().map(|k| (k.clone(), Err(e.clone()))).collect()
-            }
-        }
+        let found_todos = self.repo.load_todos_by_ids(keys).await;
+        crate::dataloader::handle_found_items(keys, found_todos)
     }
 }
 

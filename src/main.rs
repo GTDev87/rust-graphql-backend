@@ -2,6 +2,7 @@
 extern crate diesel;
 
 pub mod db;
+pub mod dataloader;
 mod graphql_roots;
 pub mod models;
 pub mod schema;
