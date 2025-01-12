@@ -2,6 +2,7 @@
 extern crate diesel;
 
 pub mod db;
+pub mod dataloader;
 mod graphql_roots;
 pub mod models;
 pub mod schema;
@@ -10,7 +11,7 @@ use env_logger::Env;
 
 use env_logger;
 
-use log::{info, warn, error};
+use log::{info};
 
 use crate::graphql_roots::{create_schema, create_context, Schema, Context};
 use axum::{
